@@ -745,6 +745,31 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
     }
 }
 
+/*
+ * Parameter visualisations (docs/MODULES.md "Parameter visualisations
+ * (viz)"). Three groups, each a real ADSR/filter pair the DSP actually
+ * drives (not just similarly-named params): the amp envelope, the filter
+ * envelope, and the filter cutoff+resonance pair. `filt_env` (how much the
+ * filter envelope affects cutoff) and `engine` (47 cryptic algorithm
+ * abbreviations, not real waveform names a silhouette could honestly draw)
+ * are left undeclared on purpose — see docs/plans/2026-08-16-viz-migration-guide.md
+ * "if you are unsure whether a group is real, leave it undeclared."
+ */
+static const char* viz_json_for(const char *key) {
+    if (!strcmp(key, "attack"))    return ",\"viz\":{\"group\":\"amp\",\"role\":\"attack\"}";
+    if (!strcmp(key, "decay"))     return ",\"viz\":{\"group\":\"amp\",\"role\":\"decay\"}";
+    if (!strcmp(key, "sustain"))   return ",\"viz\":{\"group\":\"amp\",\"role\":\"sustain\"}";
+    if (!strcmp(key, "release"))   return ",\"viz\":{\"group\":\"amp\",\"role\":\"release\"}";
+    if (!strcmp(key, "cutoff"))    return ",\"viz\":{\"group\":\"filter\",\"role\":\"cutoff\"}";
+    if (!strcmp(key, "resonance")) return ",\"viz\":{\"group\":\"filter\",\"role\":\"resonance\"}";
+    if (!strcmp(key, "f_attack"))  return ",\"viz\":{\"group\":\"filter_env\",\"role\":\"attack\"}";
+    if (!strcmp(key, "f_decay"))   return ",\"viz\":{\"group\":\"filter_env\",\"role\":\"decay\"}";
+    if (!strcmp(key, "f_sustain")) return ",\"viz\":{\"group\":\"filter_env\",\"role\":\"sustain\"}";
+    if (!strcmp(key, "f_release")) return ",\"viz\":{\"group\":\"filter_env\",\"role\":\"release\"}";
+    if (!strcmp(key, "volume"))    return ",\"viz\":{\"kind\":\"fader\"}";
+    return "";
+}
+
 /* v2 API: Get parameter */
 static int v2_get_param(void *instance, const char *key, char *buf, int buf_len) {
     braids_instance_t *inst = (braids_instance_t*)instance;
@@ -809,10 +834,16 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                     "\"knobs\":[\"attack\",\"decay\",\"sustain\",\"release\"],"
                     "\"params\":[\"attack\",\"decay\",\"sustain\",\"release\"]"
                 "},"
+                /* f_attack..f_release first so the four land in row 0
+                 * (slots 0-3) as one contiguous run — a viz envelope group
+                 * can only be drawn when its roles sit together on one row
+                 * (docs/MODULES.md "Parameter visualisations"). cutoff and
+                 * resonance follow at slots 4-5 (row 1), the filter group's
+                 * own contiguous pair; filt_env stands alone at slot 6. */
                 "\"filter\":{"
                     "\"children\":null,"
-                    "\"knobs\":[\"cutoff\",\"resonance\",\"filt_env\",\"f_attack\",\"f_decay\",\"f_sustain\",\"f_release\"],"
-                    "\"params\":[\"cutoff\",\"resonance\",\"filt_env\",\"f_attack\",\"f_decay\",\"f_sustain\",\"f_release\"]"
+                    "\"knobs\":[\"f_attack\",\"f_decay\",\"f_sustain\",\"f_release\",\"cutoff\",\"resonance\",\"filt_env\"],"
+                    "\"params\":[\"f_attack\",\"f_decay\",\"f_sustain\",\"f_release\",\"cutoff\",\"resonance\",\"filt_env\"]"
                 "},"
                 "\"global\":{"
                     "\"children\":null,"
@@ -877,13 +908,14 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                           g_shadow_params[i].min_val == 0.0f &&
                           g_shadow_params[i].max_val == 1.0f);
             offset += snprintf(buf + offset, buf_len - offset,
-                ",{\"key\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"min\":%g,\"max\":%g%s}",
+                ",{\"key\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"min\":%g,\"max\":%g%s%s}",
                 g_shadow_params[i].key,
                 g_shadow_params[i].name[0] ? g_shadow_params[i].name : g_shadow_params[i].key,
                 g_shadow_params[i].type == PARAM_TYPE_INT ? "int" : "float",
                 g_shadow_params[i].min_val,
                 g_shadow_params[i].max_val,
-                is_pct ? ",\"unit\":\"%\",\"display_format\":\"%.0f\"" : "");
+                is_pct ? ",\"unit\":\"%\",\"display_format\":\"%.0f\"" : "",
+                viz_json_for(g_shadow_params[i].key));
         }
 
         /* Octave transpose */
