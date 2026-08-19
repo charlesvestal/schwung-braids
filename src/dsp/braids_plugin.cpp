@@ -184,23 +184,40 @@ struct BraidsPreset {
     int octave_transpose;
 };
 
+/*
+ * The trailing three fields are the parameter visualisation (docs/MODULES.md,
+ * "Parameter visualisations"). Three groups here, each one the DSP really
+ * drives rather than a set of similarly-named knobs: the amp envelope, the
+ * filter envelope, and the filter's cutoff+resonance pair.
+ *
+ * Two params are left undeclared on purpose. `filt_env` is how much the filter
+ * envelope moves the cutoff — a modulation depth, not a stage of either
+ * envelope nor half of the filter pair, so no role fits it. `engine` is 47
+ * cryptic algorithm abbreviations, and no waveform silhouette can honestly
+ * stand for a macro-oscillator algorithm. Both fall through to plain knob
+ * dials, which is the right answer; see the migration guide's "if you are
+ * unsure whether a group is real, leave it undeclared."
+ *
+ * NOTE: the filter level's knob ORDER in ui_hierarchy is load-bearing for the
+ * two filter graphics — see the comment there before reordering it.
+ */
 static const param_def_t g_shadow_params[] = {
-    {"engine",    "Engine",    PARAM_TYPE_INT,   PARAM_ENGINE,    0.0f, (float)(NUM_SHAPES - 1)},
-    {"timbre",    "Timbre",    PARAM_TYPE_FLOAT, PARAM_TIMBRE,    0.0f, 1.0f},
-    {"color",     "Color",     PARAM_TYPE_FLOAT, PARAM_COLOR,     0.0f, 1.0f},
-    {"attack",    "Attack",    PARAM_TYPE_FLOAT, PARAM_ATTACK,    0.0f, 1.0f},
-    {"decay",     "Decay",     PARAM_TYPE_FLOAT, PARAM_DECAY,     0.0f, 1.0f},
-    {"sustain",   "Sustain",   PARAM_TYPE_FLOAT, PARAM_SUSTAIN,   0.0f, 1.0f},
-    {"release",   "Release",   PARAM_TYPE_FLOAT, PARAM_RELEASE,   0.0f, 1.0f},
-    {"fm",        "FM",        PARAM_TYPE_FLOAT, PARAM_FM,        0.0f, 1.0f},
-    {"cutoff",    "Cutoff",    PARAM_TYPE_FLOAT, PARAM_CUTOFF,    0.0f, 1.0f},
-    {"resonance", "Resonance", PARAM_TYPE_FLOAT, PARAM_RESONANCE, 0.0f, 1.0f},
-    {"filt_env",  "Filt Env",  PARAM_TYPE_FLOAT, PARAM_FILT_ENV,  0.0f, 1.0f},
-    {"f_attack",  "F.Attack",  PARAM_TYPE_FLOAT, PARAM_F_ATTACK,  0.0f, 1.0f},
-    {"f_decay",   "F.Decay",   PARAM_TYPE_FLOAT, PARAM_F_DECAY,   0.0f, 1.0f},
-    {"f_sustain", "F.Sustain", PARAM_TYPE_FLOAT, PARAM_F_SUSTAIN, 0.0f, 1.0f},
-    {"f_release", "F.Release", PARAM_TYPE_FLOAT, PARAM_F_RELEASE, 0.0f, 1.0f},
-    {"volume",    "Volume",    PARAM_TYPE_FLOAT, PARAM_VOLUME,    0.0f, 1.0f},
+    {"engine",    "Engine",    PARAM_TYPE_INT,   PARAM_ENGINE,    0.0f, (float)(NUM_SHAPES - 1), NULL,         NULL,        NULL},
+    {"timbre",    "Timbre",    PARAM_TYPE_FLOAT, PARAM_TIMBRE,    0.0f, 1.0f, NULL,         NULL,        NULL},
+    {"color",     "Color",     PARAM_TYPE_FLOAT, PARAM_COLOR,     0.0f, 1.0f, NULL,         NULL,        NULL},
+    {"attack",    "Attack",    PARAM_TYPE_FLOAT, PARAM_ATTACK,    0.0f, 1.0f, "amp",        "attack",    NULL},
+    {"decay",     "Decay",     PARAM_TYPE_FLOAT, PARAM_DECAY,     0.0f, 1.0f, "amp",        "decay",     NULL},
+    {"sustain",   "Sustain",   PARAM_TYPE_FLOAT, PARAM_SUSTAIN,   0.0f, 1.0f, "amp",        "sustain",   NULL},
+    {"release",   "Release",   PARAM_TYPE_FLOAT, PARAM_RELEASE,   0.0f, 1.0f, "amp",        "release",   NULL},
+    {"fm",        "FM",        PARAM_TYPE_FLOAT, PARAM_FM,        0.0f, 1.0f, NULL,         NULL,        NULL},
+    {"cutoff",    "Cutoff",    PARAM_TYPE_FLOAT, PARAM_CUTOFF,    0.0f, 1.0f, "filter",     "cutoff",    NULL},
+    {"resonance", "Resonance", PARAM_TYPE_FLOAT, PARAM_RESONANCE, 0.0f, 1.0f, "filter",     "resonance", NULL},
+    {"filt_env",  "Filt Env",  PARAM_TYPE_FLOAT, PARAM_FILT_ENV,  0.0f, 1.0f, NULL,         NULL,        NULL},
+    {"f_attack",  "F.Attack",  PARAM_TYPE_FLOAT, PARAM_F_ATTACK,  0.0f, 1.0f, "filter_env", "attack",    NULL},
+    {"f_decay",   "F.Decay",   PARAM_TYPE_FLOAT, PARAM_F_DECAY,   0.0f, 1.0f, "filter_env", "decay",     NULL},
+    {"f_sustain", "F.Sustain", PARAM_TYPE_FLOAT, PARAM_F_SUSTAIN, 0.0f, 1.0f, "filter_env", "sustain",   NULL},
+    {"f_release", "F.Release", PARAM_TYPE_FLOAT, PARAM_F_RELEASE, 0.0f, 1.0f, "filter_env", "release",   NULL},
+    {"volume",    "Volume",    PARAM_TYPE_FLOAT, PARAM_VOLUME,    0.0f, 1.0f, NULL,         NULL,        "fader"},
 };
 
 /* =====================================================================
@@ -745,31 +762,6 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
     }
 }
 
-/*
- * Parameter visualisations (docs/MODULES.md "Parameter visualisations
- * (viz)"). Three groups, each a real ADSR/filter pair the DSP actually
- * drives (not just similarly-named params): the amp envelope, the filter
- * envelope, and the filter cutoff+resonance pair. `filt_env` (how much the
- * filter envelope affects cutoff) and `engine` (47 cryptic algorithm
- * abbreviations, not real waveform names a silhouette could honestly draw)
- * are left undeclared on purpose — see docs/plans/2026-08-16-viz-migration-guide.md
- * "if you are unsure whether a group is real, leave it undeclared."
- */
-static const char* viz_json_for(const char *key) {
-    if (!strcmp(key, "attack"))    return ",\"viz\":{\"group\":\"amp\",\"role\":\"attack\"}";
-    if (!strcmp(key, "decay"))     return ",\"viz\":{\"group\":\"amp\",\"role\":\"decay\"}";
-    if (!strcmp(key, "sustain"))   return ",\"viz\":{\"group\":\"amp\",\"role\":\"sustain\"}";
-    if (!strcmp(key, "release"))   return ",\"viz\":{\"group\":\"amp\",\"role\":\"release\"}";
-    if (!strcmp(key, "cutoff"))    return ",\"viz\":{\"group\":\"filter\",\"role\":\"cutoff\"}";
-    if (!strcmp(key, "resonance")) return ",\"viz\":{\"group\":\"filter\",\"role\":\"resonance\"}";
-    if (!strcmp(key, "f_attack"))  return ",\"viz\":{\"group\":\"filter_env\",\"role\":\"attack\"}";
-    if (!strcmp(key, "f_decay"))   return ",\"viz\":{\"group\":\"filter_env\",\"role\":\"decay\"}";
-    if (!strcmp(key, "f_sustain")) return ",\"viz\":{\"group\":\"filter_env\",\"role\":\"sustain\"}";
-    if (!strcmp(key, "f_release")) return ",\"viz\":{\"group\":\"filter_env\",\"role\":\"release\"}";
-    if (!strcmp(key, "volume"))    return ",\"viz\":{\"kind\":\"fader\"}";
-    return "";
-}
-
 /* v2 API: Get parameter */
 static int v2_get_param(void *instance, const char *key, char *buf, int buf_len) {
     braids_instance_t *inst = (braids_instance_t*)instance;
@@ -900,22 +892,33 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
         }
         offset += snprintf(buf + offset, buf_len - offset, "]}");
 
-        /* Remaining params */
-        for (int i = 0; i < (int)PARAM_DEF_COUNT(g_shadow_params) && offset < buf_len - 100; i++) {
+        /*
+         * Remaining params. Hand-assembled rather than via
+         * param_helper_chain_params_json() because param_def_t has no room for
+         * the percentage unit/display_format these carry — but the viz field
+         * still comes from param_helper_viz_json(), reading the same table the
+         * params themselves come from, so there is no second list of keys to
+         * keep in step.
+         */
+        for (int i = 0; i < (int)PARAM_DEF_COUNT(g_shadow_params) &&
+                        offset < buf_len - PARAM_HELPER_ENTRY_MARGIN; i++) {
             if (strcmp(g_shadow_params[i].key, "engine") == 0) continue;  /* Already handled */
             /* Float params with 0-1 range get percentage display */
             int is_pct = (g_shadow_params[i].type == PARAM_TYPE_FLOAT &&
                           g_shadow_params[i].min_val == 0.0f &&
                           g_shadow_params[i].max_val == 1.0f);
             offset += snprintf(buf + offset, buf_len - offset,
-                ",{\"key\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"min\":%g,\"max\":%g%s%s}",
+                ",{\"key\":\"%s\",\"name\":\"%s\",\"type\":\"%s\",\"min\":%g,\"max\":%g%s",
                 g_shadow_params[i].key,
                 g_shadow_params[i].name[0] ? g_shadow_params[i].name : g_shadow_params[i].key,
                 g_shadow_params[i].type == PARAM_TYPE_INT ? "int" : "float",
                 g_shadow_params[i].min_val,
                 g_shadow_params[i].max_val,
-                is_pct ? ",\"unit\":\"%\",\"display_format\":\"%.0f\"" : "",
-                viz_json_for(g_shadow_params[i].key));
+                is_pct ? ",\"unit\":\"%\",\"display_format\":\"%.0f\"" : "");
+            int vn = param_helper_viz_json(&g_shadow_params[i], buf + offset, buf_len - offset);
+            if (vn < 0) return -1;
+            offset += vn;
+            offset += snprintf(buf + offset, buf_len - offset, "}");
         }
 
         /* Octave transpose */
