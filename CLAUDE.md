@@ -57,6 +57,41 @@ Implements Move Anything plugin_api_v2 (multi-instance):
 - `volume` (float 0-1): Output gain
 - `octave_transpose` (int -3 to +3): Octave shift
 
+### Parameter Visualisations (`viz`)
+
+`viz_json_for()` in `braids_plugin.cpp` declares three graphic groups on
+`chain_params`, so the knob pages draw real pictures instead of letting the
+host's detectors guess (see `schwung/docs/MODULES.md`, "Parameter
+visualisations"):
+
+- `amp` — attack/decay/sustain/release, drawn as the amp envelope
+- `filter_env` — f_attack/f_decay/f_sustain/f_release, drawn as the filter envelope
+- `filter` — cutoff/resonance, drawn as the filter response curve
+- `volume` — a single `{"kind":"fader"}`
+
+**The filter level's knob order is load-bearing.** A viz group is only drawn
+when its roles sit contiguously on one row (a page is two rows of four). The
+`filter` level lists `f_attack..f_release` first so those four land in row 0,
+with `cutoff`/`resonance` at slots 4–5 and `filt_env` alone at slot 6.
+Reordering that `knobs`/`params` array in `ui_hierarchy` will silently kill both
+filter graphics — the params still work, they just stop being a picture.
+
+Deliberately left undeclared, per the migration guide's "if unsure, leave it
+undeclared" rule:
+
+- `filt_env` is a modulation *depth*, not a stage of either envelope and not a
+  member of the filter pair. There is no honest role for it.
+- `engine` is 47 cryptic algorithm abbreviations (CSAW, MORPH, PLUK…). The only
+  candidate kind is `waveform`, and no silhouette can truthfully represent a
+  macro-oscillator algorithm.
+
+Both fall through to plain knob dials, which is the correct outcome. `timbre`
+and `color` likewise match no detector.
+
+Note that `node tools/param-pages/validate.mjs braids` (run from the `schwung`
+repo) reads a checked-in fleet capture, not the live device — it will report
+these groups as `viz-inferred` until that fixture is re-captured.
+
 ### Voice Management
 
 4-voice polyphonic with voice stealing (oldest voice). Each voice has independent MacroOscillator, amplitude ADSR, filter ADSR, and SVF filter with per-sample envelope modulation.
