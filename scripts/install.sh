@@ -16,23 +16,23 @@ echo "=== Installing Braids Module ==="
 
 # Deploy to Move - sound_generators subdirectory
 echo "Copying module to Move..."
-ssh ableton@move.local "mkdir -p /data/UserData/move-anything/modules/sound_generators/braids"
-scp -r dist/braids/* ableton@move.local:/data/UserData/move-anything/modules/sound_generators/braids/
+ssh ableton@move.local "mkdir -p /data/UserData/schwung/modules/sound_generators/braids"
+scp -r dist/braids/* ableton@move.local:/data/UserData/schwung/modules/sound_generators/braids/
 
 # Install chain presets if they exist
 if [ -d "src/chain_patches" ]; then
     echo "Installing chain presets..."
     if ls src/chain_patches/*.json 1>/dev/null 2>&1; then
-        scp src/chain_patches/*.json ableton@move.local:/data/UserData/move-anything/patches/
+        scp src/chain_patches/*.json ableton@move.local:/data/UserData/schwung/patches/
     fi
 fi
 
 # Set permissions so Module Store can update later
 echo "Setting permissions..."
-ssh ableton@move.local "chmod -R a+rw /data/UserData/move-anything/modules/sound_generators/braids"
+ssh ableton@move.local "chmod -R a+rw /data/UserData/schwung/modules/sound_generators/braids"
 
 echo ""
 echo "=== Install Complete ==="
-echo "Module installed to: /data/UserData/move-anything/modules/sound_generators/braids/"
+echo "Module installed to: /data/UserData/schwung/modules/sound_generators/braids/"
 echo ""
-echo "Restart Move Anything to load the new module."
+echo "Modules rescan on list -- no restart needed."
