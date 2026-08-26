@@ -808,7 +808,12 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                     "\"count_param\":\"preset_count\","
                     "\"name_param\":\"preset_name\","
                     "\"children\":null,"
-                    "\"knobs\":[\"engine\",\"timbre\",\"color\",\"attack\",\"decay\",\"sustain\",\"cutoff\",\"filt_env\"],"
+                    /* The amp envelope is A/D/S/R — all four, in order. The row
+                     * is at the 8-knob cap, so filt_env gives up its slot; it
+                     * stays reachable (and editable) on the Filter level, which
+                     * carries it at slot 6. This matches the knobs array
+                     * module.json has always declared. */
+                    "\"knobs\":[\"engine\",\"timbre\",\"color\",\"attack\",\"decay\",\"sustain\",\"release\",\"cutoff\"],"
                     "\"params\":["
                         "{\"level\":\"oscillator\",\"label\":\"Oscillator\"},"
                         "{\"level\":\"envelope\",\"label\":\"Amp Envelope\"},"
