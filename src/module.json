@@ -239,11 +239,11 @@
             "engine",
             "timbre",
             "color",
+            "cutoff",
             "attack",
             "decay",
             "sustain",
-            "release",
-            "cutoff"
+            "release"
           ],
           "label": "Braids"
         }

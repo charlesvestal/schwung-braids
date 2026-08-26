@@ -69,12 +69,23 @@ visualisations"):
 - `filter` — cutoff/resonance, drawn as the filter response curve
 - `volume` — a single `{"kind":"fader"}`
 
-**The filter level's knob order is load-bearing.** A viz group is only drawn
-when its roles sit contiguously on one row (a page is two rows of four). The
-`filter` level lists `f_attack..f_release` first so those four land in row 0,
-with `cutoff`/`resonance` at slots 4–5 and `filt_env` alone at slot 6.
-Reordering that `knobs`/`params` array in `ui_hierarchy` will silently kill both
-filter graphics — the params still work, they just stop being a picture.
+**The `root` and `filter` knob orders are both load-bearing.** A viz group is
+only drawn when its roles sit contiguously on one row (a page is two rows of
+four). Reordering either `knobs`/`params` array in `ui_hierarchy` will silently
+kill the graphics — the params still work, they just stop being a picture.
+
+- `root` puts `cutoff` at slot 3 to close row 0, so `attack`/`decay`/`sustain`/
+  `release` occupy slots 4–7 — all of row 1 — and the amp envelope draws as a
+  curve. Splitting those four across the row boundary turns it back into four
+  plain dials. (`root` is at the 8-knob cap, so `filt_env` is not on it; it is
+  reachable on `filter` at slot 6.)
+- `filter` lists `f_attack..f_release` first so those four land in row 0, with
+  `cutoff`/`resonance` at slots 4–5 and `filt_env` alone at slot 6.
+
+`root`'s `knobs` array is declared twice — in `src/module.json` and in the
+runtime `ui_hierarchy` in `braids_plugin.cpp`. The runtime one is what the
+shadow UI reads. **Keep them identical**; they had drifted apart once, and the
+runtime copy had dropped `release` entirely (SCH-42).
 
 Deliberately left undeclared, per the migration guide's "if unsure, leave it
 undeclared" rule:

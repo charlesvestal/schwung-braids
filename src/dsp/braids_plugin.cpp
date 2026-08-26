@@ -808,12 +808,19 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
                     "\"count_param\":\"preset_count\","
                     "\"name_param\":\"preset_name\","
                     "\"children\":null,"
-                    /* The amp envelope is A/D/S/R — all four, in order. The row
-                     * is at the 8-knob cap, so filt_env gives up its slot; it
-                     * stays reachable (and editable) on the Filter level, which
-                     * carries it at slot 6. This matches the knobs array
-                     * module.json has always declared. */
-                    "\"knobs\":[\"engine\",\"timbre\",\"color\",\"attack\",\"decay\",\"sustain\",\"release\",\"cutoff\"],"
+                    /* Root's knob order is load-bearing, for the same reason
+                     * the filter level's is: a viz group is only drawn when its
+                     * roles sit contiguously on one row (a page is two rows of
+                     * four). attack/decay/sustain/release are the four roles of
+                     * the "amp" group, so they are placed at slots 4-7 — all of
+                     * row 1 — and the page draws the amp envelope as a curve.
+                     * cutoff takes slot 3 to close row 0. Moving any of the
+                     * four, or splitting them across the row boundary, silently
+                     * turns the curve back into four plain dials.
+                     *
+                     * The row is at the 8-knob cap, so filt_env gives up its
+                     * slot; it stays reachable on the Filter level at slot 6. */
+                    "\"knobs\":[\"engine\",\"timbre\",\"color\",\"cutoff\",\"attack\",\"decay\",\"sustain\",\"release\"],"
                     "\"params\":["
                         "{\"level\":\"oscillator\",\"label\":\"Oscillator\"},"
                         "{\"level\":\"envelope\",\"label\":\"Amp Envelope\"},"

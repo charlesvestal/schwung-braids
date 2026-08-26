@@ -42,15 +42,16 @@
             " Algorithm-specific",
             " (see Algorithms)",
             "",
-            "Knob 4: Attack",
-            "Knob 5: Decay",
-            "Knob 6: Sustain",
-            "Knob 7: Release",
-            " Amp envelope ADSR",
-            "",
-            "Knob 8: Cutoff",
+            "Knob 4: Cutoff",
             " Post-oscillator",
-            " filter frequency"
+            " filter frequency",
+            "",
+            "Knob 5: Attack",
+            "Knob 6: Decay",
+            "Knob 7: Sustain",
+            "Knob 8: Release",
+            " Amp envelope ADSR",
+            " drawn as a curve"
           ]
         },
         {
