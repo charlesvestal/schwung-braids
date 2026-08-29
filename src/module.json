@@ -23,6 +23,7 @@
           "params": [
             {
               "key": "engine",
+              "short_name": "ALGO",
               "label": "Algorithm",
               "type": "enum",
               "options": [
@@ -158,6 +159,7 @@
             },
             {
               "key": "filt_env",
+              "short_name": "Env",
               "label": "Filt Env",
               "type": "float",
               "min": 0.0,
@@ -196,6 +198,7 @@
             },
             {
               "key": "f_attack",
+              "short_name": "Attack",
               "label": "F.Attack",
               "type": "float",
               "min": 0.0,
@@ -206,6 +209,7 @@
             },
             {
               "key": "f_decay",
+              "short_name": "Decay",
               "label": "F.Decay",
               "type": "float",
               "min": 0.0,
@@ -216,6 +220,7 @@
             },
             {
               "key": "f_sustain",
+              "short_name": "Sustain",
               "label": "F.Sustain",
               "type": "float",
               "min": 0.0,
@@ -226,6 +231,7 @@
             },
             {
               "key": "f_release",
+              "short_name": "Release",
               "label": "F.Release",
               "type": "float",
               "min": 0.0,
